@@ -97,7 +97,7 @@ function update() {
 
   color("transparent")
   let smashed = char("a", player.pos).isColliding.rect.light_black
-  if(smashed){
+  if(smashed || player.pos.x<0 || player.pos.x>G.WIDTH || player.pos.y<0 || player.pos.y>G.HEIGHT){
     end()
     ticks = 0;
     while(astriods.length > 0){ astriods.pop().destroy() }

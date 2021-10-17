@@ -35,7 +35,7 @@ characters = [
   }
   
   let player = {
-    pos: vec(G.WIDTH * 0.4, G.HEIGHT * 0.7)
+    pos: vec(G.WIDTH * 0.2, G.HEIGHT * 0.7)
   };
 
   let goingUp = false;
@@ -53,7 +53,7 @@ function update() {
   if (!ticks) {
     score = 0
     G.SPEED = 1
-    player.pos = vec(G.WIDTH * 0.4, G.HEIGHT * 0.4)
+    player.pos = vec(G.WIDTH * 0.2, G.HEIGHT * 0.4)
   }
 
   shotTimer++
@@ -79,7 +79,6 @@ function update() {
     rect(rock.x-rock.radius, rock.y-rock.radius*2, rock.health*2, 2)
     rock.scroll()
     color("light_blue")
-    /*
     particle(
       rock.x, // x coordinate
       rock.y, // y coordinate
@@ -88,7 +87,6 @@ function update() {
       0, // The emitting angle
       PI/4  // The emitting width
     );
-    */
 
     if(rock.shouldRemove(shot)){
       rock.destroy()

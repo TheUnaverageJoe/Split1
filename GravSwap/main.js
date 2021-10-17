@@ -21,6 +21,17 @@ ccccc
 `,
 ];
 
+/**
+ * @typedef {{
+ * pos: Vector
+ * }} Enemy
+ */
+
+/**
+ * @type { Enemy [] }
+ */
+let enemies;
+
 const G = {
   WIDTH: 200,
   HEIGHT: 100,
@@ -46,6 +57,7 @@ let gravity = true;
 let topHalf = false;
 let grounded;
 let doubled = 1;
+let enemyCooldown;
 
 function range(min, max) {
   return Math.random() * (max - min) + min;
@@ -58,7 +70,33 @@ function update() {
     G.SPEED = 1
     player.pos = vec(G.WIDTH * 0.4, G.HEIGHT * 0.4)
     platforms[0] = (new rectObj(G.WIDTH/2, G.HEIGHT-10, G.WIDTH/3, 10))
+    enemyCooldown = 120;
+    enemies = [];
   }
+
+  enemyCooldown -= 1;
+  if (enemyCooldown == 0) {
+    const posX = G.WIDTH;
+    const posY = rnd(0, G.HEIGHT);
+    enemyCooldown = 120;
+    enemies.push({ pos: vec(posX, posY)})
+  }
+
+  enemies.forEach((e) => {
+    e.pos.x -= 2 * difficulty;
+    color("black");
+    
+    const colliding = box(e.pos, 6).isColliding.rect.cyan;
+    if ((abs(e.pos.x - player.pos.x) <= 3) && abs(e.pos.y - player.pos.y) <= 3) {
+      color("yellow");
+      particle(e.pos);
+      play("explosion")
+      end()
+  }
+    
+    return (e.pos.y > G.HEIGHT);
+  });
+    
 
   if(everyOtherTick){
     everyOtherTick = !everyOtherTick
@@ -88,11 +126,16 @@ function update() {
   }
   //if closest edge of platform is 3/4 of the screen then spawn more
   if(closestPlatform.x + closestPlatform.width < 3*(G.WIDTH/4)){ 
-    platforms.push(new rectObj(G.WIDTH, yLoc, G.WIDTH/4, 10))
+    platforms.push(new rectObj(G.WIDTH, yLoc, G.WIDTH/4, 10, rnd(-1, 2)))
   }
 
   platforms.forEach((plat)=> {
-    color('red')
+    if (plat.type < 0) {
+      color('green')
+    }
+    else {
+      color('red')
+    }
     rect(plat.x, plat.y, plat.width, plat.height)
     //move platforms
     plat.scroll()
@@ -104,7 +147,8 @@ function update() {
     }
   });
   color("black")
-  let flooring
+  let flooringRed
+  let flooringGreen
   let forward = 0
   if(player.pos.x < G.WIDTH*0.4){
     forward = 1
@@ -113,17 +157,28 @@ function update() {
   }
   if(gravity){
     player.pos.add(0, G.GRAVITY*doubled)
-    flooring = char("a", player.pos).isColliding.rect.red
-    if(flooring){
+    flooringRed = char("a", player.pos).isColliding.rect.red
+    flooringGreen = char("a", player.pos).isColliding.rect.green
+    if(flooringRed){
       player.pos.add(forward, -1*doubled)
+      char("a", player.pos)
+    }
+    if(flooringGreen){
+      player.pos.add(-1, -1*doubled)
       char("a", player.pos)
     }
   }else{
     player.pos.add(0, -G.GRAVITY*doubled)
-    flooring = char("b", player.pos).isColliding.rect.red
-    if(flooring){
+    flooringRed = char("b", player.pos).isColliding.rect.red
+    flooringGreen = char("b", player.pos).isColliding.rect.green
+    if(flooringRed){
       
       player.pos.add(forward, 1*doubled)
+      char("b", player.pos)
+    }
+    if(flooringGreen){
+      
+      player.pos.add(-1, 1*doubled)
       char("b", player.pos)
     }
   }
@@ -135,8 +190,8 @@ function update() {
   }
 
   if(input.isJustPressed){
-    //score -= 30
-    player.pos.add(-10,0)
+    score -= 30
+    player.pos.add(-5,0)
     gravity = !gravity
   }
 
@@ -144,12 +199,13 @@ function update() {
 
 class rectObj {
   static counter = 0
-  constructor(x, y, width, height){
+  constructor(x, y, width, height, type){
     rectObj.counter++
     this.x = x
     this.y = y
     this.width = width
     this.height = height
+    this.type = type
   }
   scroll() {
     this.x -= G.SPEED * doubled

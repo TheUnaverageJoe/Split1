@@ -71,6 +71,12 @@ function update() {
   }
 
   
+  shots.forEach((shot)=>{
+    shot.step()
+    color("green")
+    box(shot.x, shot.y, shot.power)
+  });
+  
   astriods.forEach((rock)=>{
     let shot
     color("light_black")
@@ -87,17 +93,27 @@ function update() {
       0, // The emitting angle
       PI/4  // The emitting width
     );
-
-    if(rock.shouldRemove(shot)){
+    if(shot){
+      rock.health--
+    }
+    if(rock.shouldRemove()){
       rock.destroy()
       rock = null
       astriods.shift()
     }
   });
+  remove(shots, (shot)=>{
+    color("green")
+    let hit = box(shot.x, shot.y, shot.power).isColliding.rect.light_black
+    if(hit){
+      shot.power--
+    }
+    return shot.shouldRemove()
+  });
 
   color("transparent")
   let smashed = char("a", player.pos).isColliding.rect.light_black
-  if(smashed || player.pos.x<0 || player.pos.x>G.WIDTH || player.pos.y<0 || player.pos.y>G.HEIGHT){
+  if(smashed){
     end()
     ticks = 0;
     while(astriods.length > 0){ astriods.pop().destroy() }
@@ -134,19 +150,6 @@ function update() {
     goingUp = false
     player.pos.add(0, 1)
   }
-  color("green")
-  shots.forEach((shot)=>{
-    let hit = box(shot.x, shot.y, shot.power).isColliding.rect.light_black
-    if(hit){
-      console.log("OOF")
-      this.power--
-    }
-    shot.step()
-    if(shot.shouldRemove()){
-      shot = null
-      shots.shift()
-    }
-  });
 }
 
 class Shot {
@@ -158,8 +161,8 @@ class Shot {
     this.power = power
   }
   step(){
-    this.x += this.dirX
-    this.y += this.dirY
+    this.x += this.dirX*2
+    this.y += this.dirY*2
   }
   shouldRemove(){
     if(this.x < 0 || this.x > G.WIDTH || this.y < 0 || this.y > G.HEIGHT || this.power <= 0){
@@ -185,8 +188,8 @@ class Astroid {
     this.x -= G.SPEED
   }
 
-  shouldRemove(shot){
-    if(shot){
+  shouldRemove(){
+    if(this.health<=0){
       score += this.radius
       return true
     }
